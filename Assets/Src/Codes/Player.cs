@@ -1,10 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
-using UnityEditor.Rendering;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -84,5 +79,10 @@ public class Player : MonoBehaviour
         if (!GameManager.instance.isLive) {
             return;
         }
+    }
+
+    public void SetPosition(float x, float y)
+    {
+        transform.position = new Vector2(x, y);
     }
 }

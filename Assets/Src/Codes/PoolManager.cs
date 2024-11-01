@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,7 +10,7 @@ public class PoolManager : MonoBehaviour
     List<GameObject> pool;
 
      // 유저를 관리할 딕셔너리
-    Dictionary<string, GameObject> userDictionary = new Dictionary<string, GameObject>();
+     readonly Dictionary<string, GameObject> userDictionary = new Dictionary<string, GameObject>();
 
     void Awake() {
         pool = new List<GameObject>();

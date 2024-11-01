@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,13 +6,13 @@ public class HUD : MonoBehaviour
     public enum InfoType { DeviceId, Time }
     public InfoType type;
 
-    Text myText;
+    private Text myText;
 
-    void Awake() {
+    private void Awake() {
         myText = GetComponent<Text>();
     }
 
-    void LateUpdate() {
+    private void LateUpdate() {
         switch(type) {
             case InfoType.DeviceId:
                 myText.text = string.Format("{0}", GameManager.instance.deviceId);

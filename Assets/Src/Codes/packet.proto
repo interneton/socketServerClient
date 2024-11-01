@@ -7,6 +7,12 @@ message CommonPacket {
   bytes payload = 4;
 }
 
+message Ping {
+  int64 timestamp = 1;
+}
+
 message InitialPacket {
   string deviceId = 1;
+  uint32 playerId = 2;
+  float latency = 3;
 }

@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class AudioManager : MonoBehaviour
@@ -9,15 +7,15 @@ public class AudioManager : MonoBehaviour
     [Header("#BGM")]
     public AudioClip bgmClip;
     public float bgmVolume;
-    AudioSource bgmPlayer;
-    AudioHighPassFilter bgmEffect;
+    private AudioSource bgmPlayer;
+    private AudioHighPassFilter bgmEffect;
 
     [Header("#SFX")]
     public AudioClip[] sfxClips;
     public float sfxVolume;
     public int channels;
-    AudioSource[] sfxPlayers;
-    int channelIndex;
+    private AudioSource[] sfxPlayers;
+    private int channelIndex;
 
     public enum Sfx { Dead, Hit, LevelUp = 3, Lose, Melee, Range = 7, Select, Win }
 
@@ -29,18 +27,30 @@ public class AudioManager : MonoBehaviour
 
     void Init() {
         // 배경음 플레이어 초기화
-        GameObject bgmObject = new GameObject("BgmPlayer");
-        bgmObject.transform.parent = transform;
+        GameObject bgmObject = new GameObject("BgmPlayer")
+        {
+            transform =
+            {
+                parent = transform
+            }
+        };
         bgmPlayer = bgmObject.AddComponent<AudioSource>();
         bgmPlayer.playOnAwake = false;
         bgmPlayer.loop = true;
         bgmPlayer.volume = bgmVolume;
         bgmPlayer.clip = bgmClip;
-        bgmEffect = Camera.main.GetComponent<AudioHighPassFilter>();
+        
+        if (Camera.main != null) 
+            bgmEffect = Camera.main.GetComponent<AudioHighPassFilter>();
 
         // 효과음 플레이어 초기화
-        GameObject sfxObject = new GameObject("SfxPlayer");
-        sfxObject.transform.parent = transform;
+        GameObject sfxObject = new GameObject("SfxPlayer")
+        {
+            transform =
+            {
+                parent = transform
+            }
+        };
         sfxPlayers = new AudioSource[channels];
 
         for(int i = 0; i < sfxPlayers.Length; i++) {

@@ -21,8 +21,8 @@ public class NetworkManager : MonoBehaviour
     
     WaitForSecondsRealtime wait;
 
-    private byte[] receiveBuffer = new byte[4096];
-    private List<byte> incompleteData = new List<byte>();
+    private readonly byte[] receiveBuffer = new byte[4096];
+    private readonly List<byte> incompleteData = new List<byte>();
 
     void Awake() {        
         instance = this;
@@ -108,7 +108,7 @@ public class NetworkManager : MonoBehaviour
         uiNotice.transform.GetChild(index).gameObject.SetActive(false);
     }
 
-    public static byte[] ToBigEndian(byte[] bytes) {
+    private static byte[] ToBigEndian(byte[] bytes) {
         if (BitConverter.IsLittleEndian)
         {
             Array.Reverse(bytes);
@@ -157,13 +157,35 @@ public class NetworkManager : MonoBehaviour
 
         // 패킷 생성
         byte[] packet = new byte[header.Length + data.Length];
-        Array.Copy(header, 0, packet, 0, header.Length);
+        Array.Copy(header, 0,  packet, 0, header.Length);
         Array.Copy(data, 0, packet, header.Length, data.Length);
 
         await Task.Delay(GameManager.instance.latency);
         
         // 패킷 전송
-        stream.Write(packet, 0, packet.Length);
+        stream?.Write(packet, 0, packet.Length);
+    }
+    
+    async void SendPong(long lastTimestmap)
+    {
+        // Create a ping message with timestamp and deviceId
+        Ping pongMessage = new Ping 
+        { 
+            timestamp = lastTimestmap, 
+        };
+
+        var writer = new ArrayBufferWriter<byte>();
+        Packets.Serialize(writer, pongMessage);
+
+        byte[] data = writer.WrittenSpan.ToArray();
+        byte[] header = CreatePacketHeader(data.Length, Packets.PacketType.Ping);
+
+        byte[] packet = new byte[header.Length + data.Length];
+        Array.Copy(header, 0, packet, 0, header.Length);
+        Array.Copy(data, 0, packet, header.Length, data.Length);
+
+        await Task.Delay(GameManager.instance.latency);
+        stream?.Write(packet, 0, packet.Length);
     }
 
     void SendInitialPacket() {
@@ -187,8 +209,7 @@ public class NetworkManager : MonoBehaviour
 
         SendPacket(locationUpdatePayload, (uint)Packets.HandlerIds.LocationUpdate);
     }
-
-
+    
     void StartReceiving() {
         _ = ReceivePacketsAsync();
     }
@@ -231,6 +252,9 @@ public class NetworkManager : MonoBehaviour
 
             switch (packetType)
             {
+                case Packets.PacketType.Ping:
+                    HandlePingPacket(packetData);
+                    break;
                 case Packets.PacketType.Normal:
                     HandleNormalPacket(packetData);
                     break;
@@ -253,8 +277,12 @@ public class NetworkManager : MonoBehaviour
         }
 
         if (response.data != null && response.data.Length > 0) {
-            if (response.handlerId == 0) {
-                GameManager.instance.GameStart();
+
+            switch ((Packets.HandlerIds) response.handlerId)
+            {
+                case Packets.HandlerIds.Init:
+                    Handler.InitialHandler(Packets.ParsePayload<InitialResponse>(response.data));
+                    break;
             }
             ProcessResponseData(response.data);
         }
@@ -285,6 +313,21 @@ public class NetworkManager : MonoBehaviour
             Spawner.instance.Spawn(response);
         } catch (Exception e) {
             Debug.LogError($"Error HandleLocationPacket: {e.Message}");
+        }
+    }
+
+    void HandlePingPacket(byte[] data)
+    {
+        try
+        {
+            Ping pingMessage = Packets.Deserialize<Ping>(data);
+            long receivedTimestamp = pingMessage.timestamp;
+            SendPong(receivedTimestamp);
+
+        } catch(Exception e)
+        { 
+            Debug.LogError($"Error HandlePingPacket: {e.Message}");
+
         }
     }
 }
